@@ -43,7 +43,7 @@ class menu(object):
 		saver.run()
 		try:
 			while 1:
-				selection = raw_input("\033c\nMain menu:\n1.) Make a player a zombie\n2.) Make a player human\n3.) Change PZ\n4.) Get a list of players.\n5.) Get a list of zombies.\n6.) Get a list of humans.\n7.) Fetch pID from a name\n8.) Send out a mission.\n9.) Perform a manual backup\n0.) End game (there will be a conformation dialogue).\n-> ")
+				selection = raw_input("\033c\nMain menu:\n1.) Make a player a zombie\n2.) Make a player human\n3.) Change PZ\n4.) Get a list of players.\n5.) Get a list of zombies.\n6.) Get a list of humans.\n7.) Fetch pID from a name\n8.) Send out a mission.\n9.) Add players\n10.) Perform a manual backup\n0.) End game (there will be a conformation dialogue).\n-> ")
 				selection = selection.rstrip()
 				if selection == '1':
 					self.setAllegiance(True, 'Zombie')
@@ -62,6 +62,8 @@ class menu(object):
 				elif selection == '8':
 					self.mission()
 				elif selection == '9':
+					self.AddPlayers()
+				elif selection == '10':
 					self.manualBackup()
 				elif selection == '0':
 					self.endGame()
@@ -78,7 +80,7 @@ class menu(object):
 		print "\033cSet Allegiance: %s\n%s" % (usrHlp, args.f)
 		self.pID = raw_input("pID-> ")
 		self.pID = self.pID.rstrip()
-		if self.pID in set(keys):
+		if self.pID in keySet:
 			playerManager.pDict[self.pID].zombie = side
 		elif self.pID == "exit":
 			raw_input("No allegiances have been changed\n<---Press Enter to continue--->")
@@ -91,7 +93,7 @@ class menu(object):
 		if self.selection.lower() == 'y':
 			self.selection = raw_input("\033cSet PZ:\npID-> ")
 			while not thingSet:
-				if self.selection.rstrip() in set(keys):
+				if self.selection.rstrip() in keySet:
 					playerManager.pDict[self.selection].PZero = True
 					thingSet = True
 				elif self.selection.rstrip() == 'exit':
@@ -102,7 +104,7 @@ class menu(object):
 		elif self.selection.lower() == 'n':
 			self.selection = raw_input("\033cSet PZ:\npID-> ")
 			while not thingSet:
-				if self.selection.rstrip() in set(keys):
+				if self.selection.rstrip() in keySet:
 					for key in keys:
 						if playerManager.pDict[key].PZero:
 							playerManager.pDict[key].PZero = False
@@ -201,7 +203,27 @@ class menu(object):
 
 		except Exception, e:
 			raw_input("Backup Unsuccessful!\n<---Press Enter to continue--->")
-		
+	def AddPlayers(self):
+		carrerDict = {'Alltel Wireless':'@message.Alltel.com', 'Boost Mobile':'@myboostmobile.com', 'AT&T':'@txt.att.net','Sprint':'@messaging.sprintpcs.com','Straight Talk':'@VTEXT.COM', 'T-Mobile':'@tmomail.net','U.S. Cellular':'@email.uscc.net', 'Verizon':'@vtext.com', 'Virgin Mobile':'@vmobl.com'}
+		playerTempList=[]
+
+		fileName = raw_input("Please enter the name of the .csv file containing the updated player list.\nPlease note any player not included in the list will be removed from the game.\n-> ")
+
+		with open(fileName, 'rb') as csvFile:
+			csvData = csv.reader(csvFile, dialect='excel')
+			for row in csvData:
+				#+9sdG is the SHA1 hash of an empty row
+				if row[0] != "+9sdG" or row[0] not in keySet:
+					cleenNum = cleenUpNumber(row[2])
+					cleenNum = cleenNum+carrerDict[row[3]]
+					row.remove(row[2])
+					row.insert(2, cleenNum)
+					playerTempList.append((row[0], player(row[1],row[2],row[4])))
+			pDictList = playerManager.pDict.items()
+			pDictList.extend(playerTempList)
+			playerManager.pDict = dict(pDictList)
+			keys = playerManager.pDict.keys()
+			keyset = set(keys)
 
 	def endGame(self):
 		print "\033c"
@@ -542,8 +564,6 @@ def processFile(fileName):
 
 #Main is mostly used to set some stuff up and for debug but honestly not much else because the rest of it is handled by the threads.
 def main():
-
-
 	#Create the object to handle sending messages.
 	messenger = messaging(args.account, playerManager)
 	if not args.r:
@@ -576,29 +596,30 @@ def main():
 	menu(game.run(), messenger)
 
 
+#parses the args...
+parser = argparse.ArgumentParser(description="Helps with administration and management of Humans Vs. Zombies games.")
+parser.add_argument('account',	type=str, help="The address of the email account you are using i.e. example@example.com")
+parser.add_argument('username', type=str, help="The username of the email account you want to login to.")
+parser.add_argument('password', type=str, help="The password of the email account you want to login to.")
+parser.add_argument('-f', type=str, help="The name of the .csv file containing the list of players.\nWill be ignored if the -r flag is given.")
+parser.add_argument('-r', action='store_true', help="Tells the program to atempt to recover a game that has been shut down.")
+#parser.add_argument('-m', action='store_true', help="tells the progrom to atempt to merge new names in the player .csv into the current game")
 
-if __name__ == '__main__':
-	#parses the args...
-	parser = argparse.ArgumentParser(description="Helps with administration and management of Humans Vs. Zombies games.")
-	parser.add_argument('account',	type=str, help="The address of the email account you are using i.e. example@example.com")
-	parser.add_argument('username', type=str, help="The username of the email account you want to login to.")
-	parser.add_argument('password', type=str, help="The password of the email account you want to login to.")
-	parser.add_argument('-f', type=str, help="The name of the .csv file containing the list of players.\nWill be ignored if the -r flag is given.")
-	parser.add_argument('-r', action='store_true', help="Tells the program to atempt to recover a game that has been shut down.")
+args=parser.parse_args()
 
-	args=parser.parse_args()
+#checks to see that flags are set.
+if not args.r and args.f == None:
+	raw_input("Please set either the -f or the -r flag.\n<--Press Enter To Exit-->")
+	sys.exit()
 
-	#checks to see that flags are set.
-	if not args.r and args.f == None:
-		raw_input("Please set either the -f or the -r flag.\n<--Press Enter To Exit-->")
-		sys.exit()
-
-	#attempts to recover from a backup
-	if args.r:
-		fp = open('backup.dat', 'rb')
-		playerManager = pickle.load(fp)
-	else:
-		#create the player manager object from the .csv
+#attempts to recover from a backup
+if args.r:
+	fp = open('backup.dat', 'rb')
+	playerManager = pickle.load(fp)
+else:
+	#create the player manager object from the .csv
 		playerManager = players(processFile(args.f))
 	keys = playerManager.pDict.keys()
+	keySet = set(keys)
+if __name__ == '__main__':
 	main()
