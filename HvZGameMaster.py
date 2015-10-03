@@ -13,8 +13,6 @@ import math
 import pickle
 
 
-keys = []
-
 class autoSave(object):
 	"""docstring for autoSave"""
 	def __init__(self):
@@ -139,7 +137,7 @@ class menu(object):
 		raw_input("<---Press Enter to continue--->")
 
 	def zombieList(self):
-		print "\033cList of zombies:\nName\t\t| pID\t| Kills\t| Was PZ"
+		print "\033cList of zombies:\nName\t\t| pID\t| Kills\t| Is PZ"
 		for key in keys:
 			if playerManager.pDict[key].PZero:
 				print "%s\t| %s\t| %s\t| %s" % (playerManager.pDict[key].name,key,playerManager.pDict[key].kills,playerManager.pDict[key].PZero)
@@ -539,7 +537,6 @@ def processFile(fileName):
 
 				playerTempList.append((row[0], player(row[1],row[2],row[4])))
 		playerDict = dict(playerTempList)
-	keys = playerDict.keys()
 	return playerDict
 
 
@@ -551,23 +548,28 @@ def main():
 	messenger = messaging(args.account, playerManager)
 	if not args.r:
 		playerManager.chosePZ()
+		print "\033cSending players there pIDs, this will probibly take some time...\nwhen"
+		tempNum = ""
+		for key in keys:
+			print playerManager.pDict[key].name
+			msg = "\nYour pID is " + key
+			tempNum = playerManager.pDict[key].number
+			messenger.sendSingle(tempNum, msg)
+			msg = "\nPlease remember, there is a rules meeting at 7 which you are required to attend."
+			messenger.sendSingle(tempNum, msg)
+			time.sleep(5)
+			msg = "\nThe follwing messages are a command reffrence, it is recomended that you save it for refrence throughtout the game. Commands have an hour cooldown."
+			messenger.sendSingle(tempNum, msg)
+			time.sleep(5)
+			msg = "\nHelp location\nThe help command allows a human to call for help from other humans.\nExample: help east hall"
+			messenger.sendSingle(tempNum, msg)
+			msg = "\nTagged pID\nThe tagged command allows a zombe or PZ to report a tag without having to get a hold of the admins.\nExample: tagged +9sdG"
+			messenger.sendSingle(tempNum, msg)
+			msg = "\nSiege location HH:MM\nActs like help but for zombies, is sent to all zombies, the location must be on campus.\nExample: siege science center"
+			messenger.sendSingle(tempNum, msg)
 
-	tempNum = ""
-	for key in keys:
-		msg = "\nYour pID is " + key
-		#print msg
-		tempNum = playerManager.pDict[key].number
-		messenger.sendSingle(tempNum, msg)
-		msg = "\nThe follwing messages are a command reffrence, it is recomended that you save it for refrence throughtout the game. Commands have an hour cooldown."
-		messenger.sendSingle(tempNum, msg)
-		msg = "\nHelp location\nThe help command allows a human to call for help from other humans.\nExample: help east hall"
-		messenger.sendSingle(tempNum, msg)
-		msg = "\nTagged pID\nThe tagged command allows a zombe or PZ to report a tag without having to get a hold of the admins.\nExample: tagged +9sdG"
-		messenger.sendSingle(tempNum, msg)
-		msg = "\nSiege location HH:MM\nActs like help but for zombies, is sent to all zombies, the location must be on campus.\nExample: siege science center"
-		messenger.sendSingle(tempNum, msg)
+		messenger.sendPZero("\nHey, dont tell anyone but you have been selected as PZ for this gmae, you have no cooldown on your seiges")
 
-	messenger.sendPZero("Hello, you have been selected as PZ for this gmae, you have no cooldown on your seiges")
 	mail = mailMan(playerManager)
 	#mail=None
 	game = gameLogic(playerManager,mail, messenger)
@@ -577,7 +579,7 @@ def main():
 
 if __name__ == '__main__':
 	#parses the args...
-	parser = argparse.ArgumentParser(description="Helps with adminstration and management of Humans Vs. Zombies games.")
+	parser = argparse.ArgumentParser(description="Helps with administration and management of Humans Vs. Zombies games.")
 	parser.add_argument('account',	type=str, help="The address of the email account you are using i.e. example@example.com")
 	parser.add_argument('username', type=str, help="The username of the email account you want to login to.")
 	parser.add_argument('password', type=str, help="The password of the email account you want to login to.")
@@ -598,5 +600,5 @@ if __name__ == '__main__':
 	else:
 		#create the player manager object from the .csv
 		playerManager = players(processFile(args.f))
-
+	keys = playerManager.pDict.keys()
 	main()
