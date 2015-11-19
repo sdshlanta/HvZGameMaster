@@ -207,7 +207,7 @@ class menu(object):
 		carrerDict = {'Alltel Wireless':'@message.Alltel.com', 'Boost Mobile':'@myboostmobile.com', 'AT&T':'@txt.att.net','Sprint':'@messaging.sprintpcs.com','Straight Talk':'@VTEXT.COM', 'T-Mobile':'@tmomail.net','U.S. Cellular':'@email.uscc.net', 'Verizon':'@vtext.com', 'Virgin Mobile':'@vmobl.com'}
 		playerTempList=[]
 
-		fileName = raw_input("Please enter the name of the .csv file containing the updated player list.\nPlease note any player not included in the list will be removed from the game.\n-> ")
+		fileName = raw_input("\033cPlease enter the name of the .csv file containing the updated player list.\nPlease note any player not included in the list will be removed from the game.\n-> ")
 
 		with open(fileName, 'rb') as csvFile:
 			csvData = csv.reader(csvFile, dialect='excel')
